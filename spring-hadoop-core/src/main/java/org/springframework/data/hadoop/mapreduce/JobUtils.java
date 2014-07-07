@@ -17,8 +17,6 @@ package org.springframework.data.hadoop.mapreduce;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobClient;
@@ -28,7 +26,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Job.JobState;
 import org.apache.hadoop.mapreduce.JobID;
 import org.springframework.data.hadoop.configuration.JobConfUtils;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Utilities around Hadoop {@link Job}s.
@@ -120,15 +117,6 @@ public abstract class JobUtils {
 		}
 	}
 
-	static Field JOB_INFO;
-	static Field JOB_CLIENT_STATE;
-
-	static {
-		//TODO: remove the need for this
-		JOB_CLIENT_STATE = ReflectionUtils.findField(Job.class, "state");
-		ReflectionUtils.makeAccessible(JOB_CLIENT_STATE);
-	}
-
 	public static RunningJob getRunningJob(Job job) {
 		if (job == null) {
 			return null;
@@ -137,7 +125,7 @@ public abstract class JobUtils {
 		try {
 			Configuration cfg = job.getConfiguration();
 			cfg.set("mapreduce.framework.name", "yarn");
-			JobClient jobClient = null;
+			JobClient jobClient;
 			try {
 				Constructor<JobClient> constr = JobClient.class.getConstructor(Configuration.class);
 				jobClient = constr.newInstance(cfg);
@@ -203,13 +191,8 @@ public abstract class JobUtils {
 		// attempt to capture the original status
 		JobStatus originalStatus = JobStatus.DEFINED;
 		try {
-			Method getJobState =
-					ReflectionUtils.findMethod(Job.class, "getJobState");
-			Object state = getJobState.invoke(job);
-			if (state instanceof Enum) {
-				int value = ((Enum)state).ordinal();
-				originalStatus = JobStatus.fromRunState(value + 1);
-			}
+			org.apache.hadoop.mapreduce.JobStatus.State state = job.getJobState();
+			originalStatus = JobStatus.fromRunState(state.ordinal() + 1);
 		} catch (Exception ignore) {}
 
 		// go for the running info if available

@@ -883,6 +883,10 @@ project('spring-data-hadoop-build-tests') {
 			maxGranularity 2
 		}
 
+		test {
+			jvmArgs("-XX:MaxPermSize=256m")
+		}
+
 		doFirst() {
 			ext.msg = " "
 

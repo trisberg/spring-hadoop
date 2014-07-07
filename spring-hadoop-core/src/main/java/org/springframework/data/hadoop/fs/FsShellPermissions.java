@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 the original author or authors.
+ * Copyright 2011-2014 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import java.util.LinkedList;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FsShell;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.hadoop.HadoopException;
 import org.springframework.util.ClassUtils;
@@ -34,11 +32,9 @@ import org.springframework.util.ReflectionUtils;
  * without having to duplicate its code. 
  * 
  * @author Costin Leau
+ * @author Thomas Risberg
  */
 abstract class FsShellPermissions {
-
-	private static boolean IS_HADOOP_20X = ClassUtils.isPresent("org.apache.hadoop.fs.FsShellPermissions$Chmod",
-			FsShellPermissions.class.getClassLoader());
 
 	enum Op {
 		CHOWN("-chown"), CHMOD("-chmod"), CHGRP("-chgrp");
@@ -54,7 +50,6 @@ abstract class FsShellPermissions {
 		}
 	}
 
-	// TODO: move this into Spring Core (but add JDK 1.5 compatibility first)
 	static <T> T[] concatAll(T[] first, T[]... rest) {
 		// can add some sanity checks
 		int totalLength = first.length;
@@ -70,7 +65,7 @@ abstract class FsShellPermissions {
 		return result;
 	}
 
-	static void changePermissions(FileSystem fs, Configuration config, Op op, boolean recursive, String group, String... uris) {
+	static void changePermissions(Configuration config, Op op, boolean recursive, String group, String... uris) {
 		String[] argvs = new String[0];
 
 		if (recursive) {
@@ -78,34 +73,22 @@ abstract class FsShellPermissions {
 		}
 		argvs = concatAll(argvs, new String[] { group }, uris);
 
-		// Hadoop 1.0.x
-		if (!IS_HADOOP_20X) {
-			Class<?> cls = ClassUtils.resolveClassName("org.apache.hadoop.fs.FsShellPermissions", config.getClass().getClassLoader());
-			Object[] args = new Object[] { fs, op.getCmd(), argvs, 0, new FsShell(config) };
-
-			Method m = ReflectionUtils.findMethod(cls, "changePermissions", FileSystem.class, String.class, String[].class, int.class, FsShell.class);
+		Class<?> cmd = ClassUtils.resolveClassName("org.apache.hadoop.fs.shell.Command", config.getClass().getClassLoader());
+		Class<?> targetClz = ClassUtils.resolveClassName("org.apache.hadoop.fs.FsShellPermissions$Chmod", config.getClass().getClassLoader());
+		Configurable target = (Configurable) BeanUtils.instantiate(targetClz);
+		target.setConf(config);
+		// run(String...) swallows the exceptions - re-implement it here
+		//
+		LinkedList<String> args = new LinkedList<String>(Arrays.asList(argvs));
+		try {
+			Method m = ReflectionUtils.findMethod(cmd, "processOptions", LinkedList.class);
 			ReflectionUtils.makeAccessible(m);
-			ReflectionUtils.invokeMethod(m, null, args);
-		}
-		// Hadoop 2.x
-		else {
-			Class<?> cmd = ClassUtils.resolveClassName("org.apache.hadoop.fs.shell.Command", config.getClass().getClassLoader());
-			Class<?> targetClz = ClassUtils.resolveClassName("org.apache.hadoop.fs.FsShellPermissions$Chmod", config.getClass().getClassLoader());
-			Configurable target = (Configurable) BeanUtils.instantiate(targetClz);
-			target.setConf(config);
-			// run(String...) swallows the exceptions - re-implement it here
-			//
-			LinkedList<String> args = new LinkedList<String>(Arrays.asList(argvs));
-			try {
-				Method m = ReflectionUtils.findMethod(cmd, "processOptions", LinkedList.class);
-				ReflectionUtils.makeAccessible(m);
-				ReflectionUtils.invokeMethod(m, target, args);
-				m = ReflectionUtils.findMethod(cmd, "processRawArguments", LinkedList.class);
-				ReflectionUtils.makeAccessible(m);
-				ReflectionUtils.invokeMethod(m, target, args);
-			} catch (IllegalStateException ex){
-				throw new HadoopException("Cannot change permissions/ownership " + ex);
-			}
+			ReflectionUtils.invokeMethod(m, target, args);
+			m = ReflectionUtils.findMethod(cmd, "processRawArguments", LinkedList.class);
+			ReflectionUtils.makeAccessible(m);
+			ReflectionUtils.invokeMethod(m, target, args);
+		} catch (IllegalStateException ex){
+			throw new HadoopException("Cannot change permissions/ownership " + ex);
 		}
 	}
 }

@@ -16,10 +16,8 @@
 package org.springframework.data.hadoop.config;
 
 import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.xml.AbstractSimpleBeanDefinitionParser;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.factory.xml.ParserContext;
@@ -69,21 +67,6 @@ public abstract class AbstractImprovedSimpleBeanDefinitionParser extends Abstrac
 			}
 		}
 		postProcess(builder, element);
-	}
-
-	protected void registerBeanDefinition(BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {
-
-		// disable this for now
-		//		String name = defaultId(null, null);
-		//		// register name as alias
-		//		if (name != null && name.equals(definition.getBeanName())) {
-		//			String alias = camelCaseToHyphenated(name);
-		//			Field as = ReflectionUtils.findField(BeanDefinitionHolder.class, "aliases");
-		//			ReflectionUtils.makeAccessible(as);
-		//			ReflectionUtils.setField(as, definition, new String[] { alias });
-		//		}
-
-		super.registerBeanDefinition(definition, registry);
 	}
 
 

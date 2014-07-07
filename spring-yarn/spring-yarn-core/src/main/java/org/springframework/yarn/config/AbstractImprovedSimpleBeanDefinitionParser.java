@@ -75,22 +75,6 @@ abstract class AbstractImprovedSimpleBeanDefinitionParser extends AbstractSimple
 		postProcess(builder, element);
 	}
 
-	protected void registerBeanDefinition(BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {
-
-		// disable this for now
-		// String name = defaultId(null, null);
-		// // register name as alias
-		// if (name != null && name.equals(definition.getBeanName())) {
-		// String alias = camelCaseToHyphenated(name);
-		// Field as = ReflectionUtils.findField(BeanDefinitionHolder.class,
-		// "aliases");
-		// ReflectionUtils.makeAccessible(as);
-		// ReflectionUtils.setField(as, definition, new String[] { alias });
-		// }
-
-		super.registerBeanDefinition(definition, registry);
-	}
-
 	protected boolean isEligibleAttribute(String attributeName) {
 		return super.isEligibleAttribute(attributeName)
 				&& !BeanDefinitionParserDelegate.SCOPE_ATTRIBUTE.equals(attributeName)

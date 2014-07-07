@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 the original author or authors.
+ * Copyright 2011-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public class FsShell implements Closeable, DisposableBean {
 	}
 
 	public void chgrp(boolean recursive, String group, String... uris) {
-		FsShellPermissions.changePermissions(fs, configuration, FsShellPermissions.Op.CHGRP, recursive, group, uris);
+		FsShellPermissions.changePermissions(configuration, FsShellPermissions.Op.CHGRP, recursive, group, uris);
 	}
 
 	public void chmod(String mode, String uri) {
@@ -223,7 +223,7 @@ public class FsShell implements Closeable, DisposableBean {
 	}
 
 	public void chmod(boolean recursive, String mode, String... uris) {
-		FsShellPermissions.changePermissions(fs, configuration, FsShellPermissions.Op.CHMOD, recursive, mode, uris);
+		FsShellPermissions.changePermissions(configuration, FsShellPermissions.Op.CHMOD, recursive, mode, uris);
 	}
 
 	public void chown(String mode, String uri) {
@@ -247,7 +247,7 @@ public class FsShell implements Closeable, DisposableBean {
 	}
 
 	public void chown(boolean recursive, String owner, String... uris) {
-		FsShellPermissions.changePermissions(fs, configuration, FsShellPermissions.Op.CHOWN, recursive, owner, uris);
+		FsShellPermissions.changePermissions(configuration, FsShellPermissions.Op.CHOWN, recursive, owner, uris);
 	}
 
 	public void copyFromLocal(String src, String dst) {
