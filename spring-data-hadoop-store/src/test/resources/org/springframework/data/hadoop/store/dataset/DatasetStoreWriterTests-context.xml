@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="path" class="java.lang.String">
+        <constructor-arg value="/tmp/dataset/test"/>
+    </bean>
+
+	<bean id="initScript" class="org.springframework.data.hadoop.scripting.HdfsScriptRunner">
+		<property name="configuration" ref="hadoopConfiguration"/>
+		<property name="arguments">
+			<map>
+				<entry key="dir" value="#{path}"/>
+			</map>
+		</property>
+		<property name="scriptSource" ref="scriptSource"/>
+		<property name="language" value="javascript"/>
+		<property name="runAtStartup" value="true"/>
+	</bean>
+
+	<bean id="scriptSource" class="org.springframework.scripting.support.StaticScriptSource">
+		<constructor-arg value="if (fsh.test(dir)) { fsh.rmr(dir); }"/>
+	</bean>
+
+	<bean id="datasetFactory" class="org.springframework.data.hadoop.store.dataset.DatasetRepositoryFactory">
+		<property name="conf" ref="hadoopConfiguration"/>
+		<property name="basePath" value="#{path}"/>
+		<property name="namespace" value="test"/>
+	</bean>
+	<bean id="datasetOperations" class="org.springframework.data.hadoop.store.dataset.DatasetTemplate">
+		<property name="datasetRepositoryFactory" ref="datasetFactory"/>
+	</bean>
+
+</beans>
